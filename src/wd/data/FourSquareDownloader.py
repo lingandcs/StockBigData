@@ -20,8 +20,13 @@ if __name__ == '__main__':
     conn = mysql.connector.connect(user='lingandcs', password='sduonline',
                               host='107.170.18.102',
                               database='goodfoodDB')
+    query_insert = "INSERT INTO FinanceNLP_review_FS(id,bizName,createAt,bizSrcID) "  \
+                    "VALUES (%s,%s,%s,%s)"
+    
     try:
         cursor = conn.cursor()
+        cursor_insert = conn.cursor()
+        
         cursor.execute("""
             SELECT * FROM goodfoodDB.goodfood_biz_FourSquare
             WHERE bizName = 'Starbucks'
@@ -45,9 +50,14 @@ if __name__ == '__main__':
                     canonicalUrl = review['canonicalUrl']
                     createAt = time.strftime('%Y-%m-%d', time.localtime(int(createAt)))
                     print reviewID, bizName, createAt, bizSrcID
+                    cursor_insert.execute(cursor_insert, ("test","test","2014-01-01","test"))
+                    cursor_insert.execute(cursor_insert, (u"test",u"test",u"2014-01-01",u"test"))
                     
+                    cursor_insert.execute(cursor_insert, (reviewID, bizName, createAt, bizSrcID))
+                    
+                    conn.commit()
 #                 print len(reviews)
-#                 sys.exit()
+                    sys.exit()
             except urllib2.HTTPError:
                 print 'fuck'
 
