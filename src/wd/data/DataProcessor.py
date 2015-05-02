@@ -72,7 +72,7 @@ def getTimewindowReviewsCount(bizName):
         
 def getTimewindowStockPrice(ticker):
     timewindowStockPrice = {}#key: year; value: weekly price
-    stockDF = stockDF = DataReader(ticker,  "google", "2009-01-01", datetime.today().date())
+    stockDF = DataReader(ticker,  "google", "2009-01-01", datetime.today().date())
 #     print stockDF
     for idx, row in stockDF.iterrows():
 #         print row[0], row['Close']
@@ -106,11 +106,16 @@ def normalize(series):
     return newSeries
     
 if __name__ == '__main__':
-    weeklyReviewCount = getTimewindowReviewsCount("Starbucks")
-    weeklyStockPrice = getTimewindowStockPrice("SBUX")
     
-    yearWeeklyReviewCount = weeklyReviewCount[2013]
-    yearWeeklyStockPrice = weeklyStockPrice[2013]
+    result = DataReader("TWTR",  "google", "2015-04-28", "2015-04-28")
+    print result
+    sys.exit()
+    
+    weeklyReviewCount = getTimewindowReviewsCount("Shake Shack")
+    weeklyStockPrice = getTimewindowStockPrice("SHAK")
+    
+    yearWeeklyReviewCount = weeklyReviewCount[2015]
+    yearWeeklyStockPrice = weeklyStockPrice[2015]
 #     print yearWeeklyReviewCount
 #     print len(yearWeeklyReviewCount)
     
@@ -132,7 +137,7 @@ if __name__ == '__main__':
     plt.gca().yaxis.grid(True)
     plt.xlabel("nth week")
     plt.ylabel("Review count and Price value")
-    plt.title("Trend of review counts and stock price of Starbucks 2013")
+    plt.title("Trend of review counts and stock price of Shake Shack 2015")
     
 #     plt.plot(range(len(yearWeeklyReviewCount)), yearWeeklyReviewCount, yearWeeklyStockPrice)
 #     plt.axis()

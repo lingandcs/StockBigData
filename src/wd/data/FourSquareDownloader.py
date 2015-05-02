@@ -16,9 +16,7 @@ import json
 apiPrefixReview_FourSquare = "https://api.foursquare.com/v2/venues/"
 apiSurfixReview_FourSquare = "/tips?sort=recent&limit=500&client_id=G3RGK41B5M5QZWCPY23IQKXZDYK3LHT4TA2HDTAGFL4NFZTD&client_secret=4BF4J3JGWWBKLMEEWVHVZ2P1VFQGJXTBBLRZU0FVSMH4TAHM"
 
-
-
-if __name__ == '__main__':
+def scrapeReviewsFromFoursquare(businessName):
     conn = mysql.connector.connect(user='lingandcs', password='sduonline',
                               host='107.170.18.102',
                               database='goodfoodDB')
@@ -30,10 +28,7 @@ if __name__ == '__main__':
         cursor_insert = conn.cursor()
         
         #Hard code biz name, to be changed
-        cursor.execute("""
-            SELECT * FROM goodfoodDB.goodfood_biz_FourSquare
-            WHERE bizName = 'Starbucks'
-        """)
+        cursor.execute("SELECT * FROM goodfoodDB.goodfood_biz_FourSquare WHERE bizName = " + "\"" + businessName + "\"")
         
         result = cursor.fetchall()
         print "%d business loaded!"% len(result)
@@ -47,6 +42,7 @@ if __name__ == '__main__':
             countBiz += 1
             if countBiz % 100 == 0:
                 print "%dth biz processed"% countBiz
+                time.sleep(10)
             bizSrcID = biz[3]
             bizName = biz[1] 
             apiURL = apiPrefixReview_FourSquare + bizSrcID + apiSurfixReview_FourSquare + "&v=" + today
@@ -63,10 +59,11 @@ if __name__ == '__main__':
 #                     print reviewID, bizName, createAt, bizSrcID
                     try:
                         cursor_insert.execute(query_insert, (reviewID, bizName, createAt, bizSrcID))
-                        print cursor.lastrowid
+#                         print cursor.lastrowid
                         countReview += 1
                         if countReview%1000 == 0:
                             print '%d reviews inserted'% countReview
+                            time.sleep(5)
                     except mysql.connector.errors.IntegrityError:
 #                         print 'fuck, duplicate key!!!'
                         pass
@@ -75,8 +72,17 @@ if __name__ == '__main__':
 #                     sys.exit()
             except urllib2.HTTPError:
                 print 'fucking network!'
-
         
     finally:
         conn.commit()
         conn.close()
+        
+if __name__ == '__main__':
+    bizNames = ["Dominos Pizza", "Domino's Pizza", "Burger King", "Jack in the Box", "McDonald's", "Wendy's", "Wendys", "SONIC Drive In", "Denny's", "IHOP", "Chipotle Mexican Grill"
+                , "Panera Bread", "Church's Chicken", "Applebee's", "Jamba Juice", "Chili's Grill & Bar", "Buffalo Wild Wings", "Papa Murphy's", "Olive Garden", "Outback Steakhouse"
+                , "El Pollo Loco", "Ruby Tuesday"]
+    bizNames = ["Wendys", "SONIC Drive In", "Denny's", "IHOP", "Chipotle Mexican Grill"
+                , "Panera Bread", "Church's Chicken", "Applebee's", "Jamba Juice"]
+    for bizName in bizNames:
+        time.sleep(10)
+        scrapeReviewsFromFoursquare(bizName)
