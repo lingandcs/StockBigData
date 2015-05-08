@@ -31,7 +31,7 @@ def getTimewindowReviewsCount(bizName):
     conn = mysql.connector.connect(user='lingandcs', password='sduonline',
                               host='107.170.18.102',
                               database='goodfoodDB')
-    query_select = "SELECT * FROM goodfoodDB.FinanceNLP_review_FS WHERE bizName = '" + bizName + "' LIMIT 100000"
+    query_select = "SELECT * FROM goodfoodDB.FinanceNLP_review_FS WHERE bizName = '" + bizName + "'"
     reviews = None
     
     try:
@@ -57,9 +57,11 @@ def getTimewindowReviewsCount(bizName):
     for review in reviews:
 #         print review
         dt = review[2]
+#         print dt
+#         print type(dt)
         year = dt.isocalendar()[0]
         week = dt.isocalendar()[1]
-#         print year
+#         print type(year)
 #         print week
         year_week = str(year) + str(week)
         if year not in timewindowReviewCount:
@@ -69,6 +71,49 @@ def getTimewindowReviewsCount(bizName):
         timewindowReviewCount[year][week] += 1
         
     return timewindowReviewCount
+        
+def getDailyReviewsCount(bizName):
+    conn = mysql.connector.connect(user='lingandcs', password='sduonline',
+                              host='107.170.18.102',
+                              database='goodfoodDB')
+    query_select = "SELECT * FROM goodfoodDB.FinanceNLP_review_FS WHERE bizName = '" + bizName + "'"
+    reviews = None
+    
+    try:
+        cursor = conn.cursor()        
+        #Hard code biz name, to be changed
+        cursor.execute(query_select)
+        
+        reviews = cursor.fetchall()
+        print "%d reviews loaded!"% len(reviews)
+        
+        hist = {}#key: number of review in certain biz; value: number of biz
+        for row in reviews:
+            count = row[0]
+            if count not in hist:
+                hist[count] = 0
+            hist[count] += 1        
+#         getHistogram(hist)
+    finally:
+        conn.close()
+        
+    timewindowReviewCount = {}#key:year; value: weekly number of reviews in each year
+        
+    for review in reviews:
+#         print review
+        dt = review[2]
+#         print type(year)
+#         print week
+        if dt not in timewindowReviewCount:
+            timewindowReviewCount[dt] = 0
+        timewindowReviewCount[dt] += 1
+        
+    timewindowReviewCountList = timewindowReviewCount.items()
+    
+    timewindowReviewCountList.sort(key = operator.itemgetter(0), reverse = False)
+#     for item in timewindowReviewCountList:
+#         print item
+    return timewindowReviewCountList
         
 def getTimewindowStockPrice(ticker):
     timewindowStockPrice = {}#key: year; value: weekly price
@@ -108,10 +153,13 @@ def normalize(series):
 if __name__ == '__main__':
     
     result = DataReader("TWTR",  "google", "2015-04-28", "2015-04-28")
-    print result
-    sys.exit()
+#     print result
+    
     
     weeklyReviewCount = getTimewindowReviewsCount("Shake Shack")
+    sys.exit()
+    
+    
     weeklyStockPrice = getTimewindowStockPrice("SHAK")
     
     yearWeeklyReviewCount = weeklyReviewCount[2015]
@@ -132,15 +180,14 @@ if __name__ == '__main__':
     plt.plot(range(len(sorted_review)), sorted_review, 'k', label="review counts")
     plt.plot(range(len(sorted_price)), sorted_price, '-', label="stock price")
     plt.legend()
-#     plt.gca(True)
     plt.gca().xaxis.grid(True)
     plt.gca().yaxis.grid(True)
     plt.xlabel("nth week")
     plt.ylabel("Review count and Price value")
     plt.title("Trend of review counts and stock price of Shake Shack 2015")
     
-#     plt.plot(range(len(yearWeeklyReviewCount)), yearWeeklyReviewCount, yearWeeklyStockPrice)
-#     plt.axis()
+    plt.plot(range(len(yearWeeklyReviewCount)), yearWeeklyReviewCount, yearWeeklyStockPrice)
+    plt.axis()
     plt.show()
     
     
