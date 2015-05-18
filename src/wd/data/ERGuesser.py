@@ -23,7 +23,7 @@ import dateutil.parser
 # from lxml.html.soupparser import fromstring
 # from BSXPath import BSXPathEvaluator,XPathResult
 import hashlib
-
+import sys
 from bs4 import BeautifulSoup
 import urllib2
 from test.test_isinstance import Child
@@ -40,18 +40,18 @@ def getERDates(ticker, cursor):
     print "%d ERs loaded!"% len(result)
     ERs = []
     for row in result:
-        print row
+#         print row
         ERDate = row[4]
         dt = dateutil.parser.parse(str(row[4])).date()        
         beforeAfter = row[6].strip().lower()
         if beforeAfter.startswith("4:00") or beforeAfter.startswith("10:00 pm"):
             beforeAfter = 'After Market Close'.lower()
-        print dt, beforeAfter
+#         print dt, beforeAfter
         if beforeAfter.startswith("before"):
-            print dt - datetime.timedelta(days=1), dt
+#             print dt - datetime.timedelta(days=1), dt
             ERs.append([dt, dt - datetime.timedelta(days=1), dt])
         elif beforeAfter.startswith("after"):
-            print dt, dt + datetime.timedelta(days=1)
+#             print dt, dt + datetime.timedelta(days=1)
             ERs.append([dt, dt, dt + datetime.timedelta(days=1)])
         else:
             print "Fucking!!!" + beforeAfter
@@ -59,27 +59,39 @@ def getERDates(ticker, cursor):
     
     return ERs
         
+#return quarterly cumulation review count
 def getQuarterDeltas(erDates, dailyReviewCounts):
-    er2ReviewCum = {}
-    i = 0
-    erDate = erDates[i][0]
-#     while(i < len(erDates)):
-#     for i,erDateInfo in enumerate(erDates):
+    er2ReviewQuarterlyCum = {}
     
-    for j,dReviewInfo in enumerate(dailyReviewCounts):
-        erDate = erDates[i][0]
-        if erDate not in er2ReviewCum:
-            er2ReviewCum[erDate] = 0
-        d = dReviewInfo[0]
-        rCount = dReviewInfo[1]
-        if d < erDate:
-            er2ReviewCum[erDate] += rCount
-        else:
-            i += 1
-            if i >= len(erDates):
-                break
+    #align first ER and first daily review count
+    #ensure first ER date is after 30 days after first review date
+    i = 0    
+    while erDates[i][0] <= dailyReviewCounts[0][0] and i < len(erDates):
+        i += 1
+    firstERDate = erDates[i][0]
+    
+    #ensure first review date is later then 30 days before first ER date
+    j = 0
+    while dailyReviewCounts[j][0] < firstERDate - datetime.timedelta(days=90):
+        j += 1
+    firstReviewDate = dailyReviewCounts[j][0]
+    
+    print firstERDate, firstReviewDate
+    
+    
+    while j < len(dailyReviewCounts):            
+        if dailyReviewCounts[j][0] >= erDates[i][0]:
+            i += 1#when date is out of current ER time window
+        #initiate value in hash
+        if erDates[i][0] not in er2ReviewQuarterlyCum:
+            er2ReviewQuarterlyCum[erDates[i][0]] = 0
             
-    return er2ReviewCum
+#         print dailyReviewCounts[j][0], dailyReviewCounts[j][1], erDates[i][0]
+        er2ReviewQuarterlyCum[erDates[i][0]] += dailyReviewCounts[j][1]
+        j += 1
+
+            
+    return er2ReviewQuarterlyCum
                 
 if __name__ == '__main__':
     conn = mysql.connector.connect(user='lingandcs', password='sduonline',
@@ -89,8 +101,29 @@ if __name__ == '__main__':
     erDates = getERDates('CMG', cursor_select)
     dailyReviewCounts = DataProcessor.getDailyReviewsCount("Chipotle")    
     quarterDeltas = getQuarterDeltas(erDates, dailyReviewCounts)
-    quarterDeltasList = quarterDeltas.items()
+    quarterDeltasList = [[item[0], item[1]] for item in quarterDeltas.items()]
     quarterDeltasList.sort(key = operator.itemgetter(0), reverse=False)
+    
+    #normalize?
+    for i in xrange(len(quarterDeltasList)):
+        if i == 0:
+#             print type(quarterDeltasList[i][1])
+            quarterDeltasList[i][1] = round(quarterDeltasList[i][1]*1.0/90, 3)
+        else:
+#             print quarterDeltasList[i][0], quarterDeltasList[i-1][0]
+            daysTimeWindow = quarterDeltasList[i][0] - quarterDeltasList[i-1][0]
+#             print daysTimeWindow.days
+            quarterDeltasList[i][1] = round(quarterDeltasList[i][1]*1.0/daysTimeWindow.days, 3)
+        
+    #calculate delta
+    for i in xrange(len(quarterDeltasList)):
+        if i == 0:
+#             print type(quarterDeltasList[i][1])
+            quarterDeltasList[i][1] = 0
+        else:
+#             print daysTimeWindow.days
+            quarterDeltasList[i][1] = quarterDeltasList[i][1] - quarterDeltasList[i-1][1]
+            
     print quarterDeltasList
 #     for er in erDates:
 #         print er
