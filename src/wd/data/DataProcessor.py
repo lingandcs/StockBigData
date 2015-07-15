@@ -76,7 +76,7 @@ def getDailyReviewsCount(bizName):
     conn = mysql.connector.connect(user='lingandcs', password='sduonline',
                               host='107.170.18.102',
                               database='goodfoodDB')
-    query_select = "SELECT * FROM goodfoodDB.FinanceNLP_review_FS WHERE bizName = '" + bizName + "'"
+    query_select = "SELECT * FROM goodfoodDB.FinanceNLP_review_FS WHERE bizName = \"" + bizName + "\""
     reviews = None
     
     try:
@@ -85,19 +85,19 @@ def getDailyReviewsCount(bizName):
         cursor.execute(query_select)
         
         reviews = cursor.fetchall()
-        print "%d reviews loaded!"% len(reviews)
-        
-        hist = {}#key: number of review in certain biz; value: number of biz
-        for row in reviews:
-            count = row[0]
-            if count not in hist:
-                hist[count] = 0
-            hist[count] += 1        
+        print "%d reviews loaded!"% len(reviews)        
+#         hist = {}#key: number of review in certain biz; value: number of biz
+#         for row in reviews:
+#             print row
+#             count = row[0]
+#             if count not in hist:
+#                 hist[count] = 0
+#             hist[count] += 1        
 #         getHistogram(hist)
     finally:
         conn.close()
         
-    timewindowReviewCount = {}#key:year; value: weekly number of reviews in each year
+    timewindowReviewCount = {}#key:date; value: daily number of reviews in each day
         
     for review in reviews:
 #         print review
@@ -110,7 +110,7 @@ def getDailyReviewsCount(bizName):
         
     timewindowReviewCountList = timewindowReviewCount.items()
     
-    timewindowReviewCountList.sort(key = operator.itemgetter(0), reverse = False)
+    timewindowReviewCountList.sort(key = operator.itemgetter(0), reverse = False)#rank by date
 #     for item in timewindowReviewCountList:
 #         print item
     return timewindowReviewCountList
