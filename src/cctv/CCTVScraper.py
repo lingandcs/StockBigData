@@ -11,7 +11,7 @@ import csv
 from dateutil.parser import parse
 from datetime import timedelta
 import sys
-
+import urllib2
 
 SESSION = requests.Session()
 
@@ -36,9 +36,13 @@ def getWebContent(u):
 #return: list of new info: [headline, body]
 def getNewsTitle(u):
     r = SESSION.get(u)
+    page = urllib2.urlopen(u) 
     webText = r.content
-    soup = BeautifulSoup(webText)
+#     print page.read()
+    soup = BeautifulSoup(page.read())
     newsSections = soup.find_all(class_ = 'title2 fs_14') 
+#     newsSections = soup.find_all('ul', attrs={'class' : 'title2 fs_14'}) 
+    print newsSections
     allNews = []
     for section in newsSections:
         newsTitles = section.find_all("li")
@@ -128,7 +132,7 @@ if __name__ == '__main__':
 #         previousDT = '20150701'
     
     
-    startDate = '20140704'
-    endDate = '20141231'
+    startDate = '20120101'
+    endDate = '20121231'
     downloadXWLB(startDate, endDate, outputFolder)    
     
