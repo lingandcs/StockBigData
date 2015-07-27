@@ -14,11 +14,36 @@ from nltk.corpus import stopwords
 import nltk.data
 import logging
 import numpy as np  # Make sure that numpy is imported
-# from gensim.models import Word2Vec
+from gensim.models import Word2Vec
 from sklearn.ensemble import RandomForestClassifier
 import csv
 import sys
 import jieba
+import glob
+
+def cleanText(doc):
+    if isinstance(doc, basestring):
+        doc = doc.strip().split()
+    #othewise, it's a word list
+    
+    newDoc = []
+    for word in doc:
+        if word.isdigit() == False:
+            newDoc.append(word.strip())
+        else:
+#             print word
+            pass
+    
+    if isinstance(doc, basestring):
+        return ' '.join(newDoc)
+    else:
+        return newDoc
+
+def preprocess(doc):
+#     print doc
+    doc = doc.replace('视频', '')
+    return doc
+
 
 def getNewsSentences(pathes):
     sents = []
@@ -42,12 +67,16 @@ def getNewsSentences(pathes):
     
 if __name__ == '__main__':
     
-    filePathes = ["D:\\projects\\StockSentiment\\data\\20130101.csv", 
-                  "D:\\projects\\StockSentiment\\data\\20130716.csv", 
-                  "D:\\projects\\StockSentiment\\data\\20140101.csv", 
-                  "D:\\projects\\StockSentiment\\data\\20140704.csv", 
-                  "D:\\projects\\StockSentiment\\data\\20150101.csv"]
+    filePathes = ["/home/lingandcs/workspace/FinancialNLP/data/20130101.csv", 
+                  "/home/lingandcs/workspace/FinancialNLP/data/20130716.csv", 
+                  "/home/lingandcs/workspace/FinancialNLP/data/20140101.csv", 
+                  "/home/lingandcs/workspace/FinancialNLP/data/20140704.csv", 
+                  "/home/lingandcs/workspace/FinancialNLP/data/20150101.csv"]
     sentences = getNewsSentences(filePathes)
+        
+    print '%d news loaded' % (len(sentences))
+    
+    
     
 #     for sent in sentences:
 #         print sent
@@ -56,29 +85,35 @@ if __name__ == '__main__':
         level=logging.INFO)
 
     # Set values for various parameters
-    num_features = 300    # Word vector dimensionality
-    min_word_count = 40   # Minimum word count
-    num_workers = 4       # Number of threads to run in parallel
+    num_features = 150    # Word vector dimensionality
+    min_word_count = 10   # Minimum word count
+    num_workers = 2       # Number of threads to run in parallel
     context = 10          # Context window size
     downsampling = 1e-3   # Downsample setting for frequent words
 
     # Initialize and train the model (this will take some time)
     print "Training Word2Vec model..."
+#     model = Word2Vec(sentences, workers=num_workers, \
+#                 size=num_features, min_count = min_word_count, \
+#                 window = context, sample = downsampling, seed=1)
     model = Word2Vec(sentences, workers=num_workers, \
                 size=num_features, min_count = min_word_count, \
-                window = context, sample = downsampling, seed=1)
-
+                )
     # If you don't plan to train the model any further, calling
     # init_sims will make the model much more memory-efficient.
     model.init_sims(replace=True)
 
     # It can be helpful to create a meaningful model name and
     # save the model for later use. You can load it later using Word2Vec.load()
-    model_name = "D:\\projects\\StockSentiment\\data\\XWLB_2013-20150715.csv"
+    model_name = "/home/lingandcs/workspace/FinancialNLP/data/XWLB_2013-20150715.csv"
     model.save(model_name)
 
-    model.doesnt_match("胡锦涛 李克强 一带一路 三个代表".split())
-#     model.doesnt_match("paris berlin london austria".split())
-    model.most_similar("李克强")
-    model.most_similar("股市")
-    model.most_similar("中国梦")
+    testWords = [u'习近平', u'李克强', u'钓鱼岛', u'日本', u'朝鲜', u'台湾', u'奥巴马', u'科学', u'发展观', u'科学发展观', u"新疆", u"经济", u"互联网", u"创业"]
+    for w in testWords:
+        if w not in model.vocab:
+            print w, 'is not in vocabulary'
+            continue
+        simWords = model.most_similar(w)
+        simWords = [item[0] for item in simWords]
+        print '\n\n Most similar words to:\t', w
+        print ' '.join(simWords[:10])
