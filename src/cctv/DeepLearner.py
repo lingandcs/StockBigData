@@ -20,6 +20,9 @@ import csv
 import sys
 import jieba
 import glob
+from sklearn.cluster import KMeans, MiniBatchKMeans
+from time import time
+
 
 def cleanText(doc):
     if isinstance(doc, basestring):
@@ -42,6 +45,8 @@ def cleanText(doc):
 def preprocess(doc):
 #     print doc
     doc = doc.replace('视频', '')
+    doc = doc.replace('[', '')
+    doc = doc.replace(']', '')
     return doc
 
 
@@ -56,8 +61,11 @@ def getNewsSentences(pathes):
                 print 'processing %d th news' % i
             i += 1
             tmpSents = row[2].split("。")
-            tmpSents = [item.strip() for item in tmpSents]
+#             tmpSents = row[1].split("。")
+            tmpSents = [preprocess(item.strip()) for item in tmpSents]
             for s in tmpSents:
+                if len(s) < 4:
+                    continue
                 wordList = jieba.cut(s, cut_all=False)
 #                 print ' '.join(list(wordList))
                 sents.append(list(wordList))
@@ -67,15 +75,19 @@ def getNewsSentences(pathes):
     
 if __name__ == '__main__':
     
-    filePathes = ["/home/lingandcs/workspace/FinancialNLP/data/20130101.csv", 
-                  "/home/lingandcs/workspace/FinancialNLP/data/20130716.csv", 
-                  "/home/lingandcs/workspace/FinancialNLP/data/20140101.csv", 
-                  "/home/lingandcs/workspace/FinancialNLP/data/20140704.csv", 
-                  "/home/lingandcs/workspace/FinancialNLP/data/20150101.csv"]
-    sentences = getNewsSentences(filePathes)
-        
-    print '%d news loaded' % (len(sentences))
-    
+    filePathes = ["/home/lingandcs/workspace/FinancialNLP/data/20150101_20150713.csv", 
+                  "/home/lingandcs/workspace/FinancialNLP/data/20130101_20130715.csv", 
+                  "/home/lingandcs/workspace/FinancialNLP/data/20140101_20140703.csv", 
+                  "/home/lingandcs/workspace/FinancialNLP/data/20130716_20131231.csv", 
+                  "/home/lingandcs/workspace/FinancialNLP/data/20110101_20110405.csv",
+                  "/home/lingandcs/workspace/FinancialNLP/data/20140704_20141231.csv",
+                  "/home/lingandcs/workspace/FinancialNLP/data/20150101_20150713.csv",
+                  "/home/lingandcs/workspace/FinancialNLP/data/20120701_20121231.csv",
+                  "/home/lingandcs/workspace/FinancialNLP/data/20110406_20110630.csv",
+                  "/home/lingandcs/workspace/FinancialNLP/data/20120101_20120630.csv",
+                  "/home/lingandcs/workspace/FinancialNLP/data/20110701_20111231.csv",
+                  ]
+    sentences = getNewsSentences(filePathes)    
     
     
 #     for sent in sentences:
@@ -85,10 +97,10 @@ if __name__ == '__main__':
         level=logging.INFO)
 
     # Set values for various parameters
-    num_features = 150    # Word vector dimensionality
+    num_features = 100    # Word vector dimensionality
     min_word_count = 10   # Minimum word count
     num_workers = 2       # Number of threads to run in parallel
-    context = 10          # Context window size
+    context = 5         # Context window size
     downsampling = 1e-3   # Downsample setting for frequent words
 
     # Initialize and train the model (this will take some time)
@@ -116,4 +128,45 @@ if __name__ == '__main__':
         simWords = model.most_similar(w)
         simWords = [item[0] for item in simWords]
         print '\n\n Most similar words to:\t', w
-        print ' '.join(simWords[:10])
+        print ' '.join(simWords[:10])    
+    
+    wordsInVocab = model.index2word
+    
+    print len(wordsInVocab), ' words in vocab'
+    
+    featureVecs = []
+    
+    for w in wordsInVocab:
+#         featureVecs = np.add(featureVecs,model[w].transpose())
+        featureVecs.append(list(model[w]))
+    
+    featureVecs = np.array(featureVecs)
+    print 'feature matrix shape:\t', featureVecs.shape
+    
+    t0 = time()  
+     
+    k = 200
+    km = KMeans(n_clusters=k, init='k-means++', max_iter=10000, n_init=1,
+                verbose=True)
+    t0 = time()
+    
+    km.fit(featureVecs)
+    print("done in %0.3fs" % (time() - t0))
+#     print featureVecs
+
+    
+    wordClusters = {}#key:cluster label; value:list of words
+    #index i is used in both vocabulary and labels
+    for i, label in enumerate(km.labels_):        
+        if label not in wordClusters:
+            wordClusters[label] = []
+        wordClusters[label].append(wordsInVocab[i])
+    pairs = wordClusters.items()
+    pairs.sort(key = lambda x:len(x[1]))
+    
+    print 'output word clusters:\t'
+    for item in pairs[::-1]:
+        print item[0], ' '.join(item[1][:])
+    
+#     for item in wordClusters.items():
+#         print item[0], ' '.join(item[1])
