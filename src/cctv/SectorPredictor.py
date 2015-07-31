@@ -19,6 +19,9 @@ import os
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import MultinomialNB,BernoulliNB
+from sklearn.linear_model import SGDClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
 import pandas as pd
 import numpy as np
 
@@ -29,9 +32,14 @@ from sklearn import metrics
 def preprocess(doc):
 #     print doc
     doc = doc.replace('视频', '')
-    doc = doc.replace('【', '')
-    doc = doc.replace('】', '')
+    doc = doc.replace('新闻联播', '')
+    doc = doc.replace('本台消息', '')
+#     doc = doc.replace('新闻联播', '')
+#     doc = doc.replace('新闻联播', '')
+#     doc = doc.replace('【', '')
+#     doc = doc.replace('】', '')
     doc = re.sub(r'\[\]','',doc)
+    doc = re.sub(r'【|】','',doc)
     doc = re.sub(r'\d+','DIGIT',doc)
     return doc
 
@@ -51,8 +59,7 @@ def loadXWLB(pathes):
             title = row[1]
             body = row[2]
             sents = []
-            tmpSents = title.split("。")
-#             tmpSents = row[1].split("。")
+            tmpSents = body.split("。")
             tmpSents = [preprocess(item.strip()) for item in tmpSents]
             for s in tmpSents:
                 if len(s) < 4:
@@ -73,7 +80,7 @@ def preprocessingPrice(dfPrices):
 #     print dfPrices
     #key [Date     Open     High      Low    Close     amount       volumn]
     dailyPriceChange = []#element:[date, up/down/even]
-    delta = 1
+    delta = 2
     for i,row in sectorPrice.iterrows():
         if i+delta >= dfPrices.shape[0]:
             break
@@ -135,7 +142,7 @@ if __name__ == '__main__':
     Y = [item[1] for item in ALL]
     
 #     print X
-    print Y
+#     print Y
     lengthTrain = int(len(ALL)*0.6)
     ALL_train = ALL[:lengthTrain]
     ALL_test = ALL[lengthTrain:]
@@ -144,16 +151,12 @@ if __name__ == '__main__':
     Y_train = Y[:lengthTrain]
     Y_test = Y[lengthTrain:]
 
-    
-    
-    
-    
-    
+
     vectorizer = CountVectorizer(tokenizer = None,    \
                              preprocessor = None, \
                              stop_words = None,   \
-                             max_features = 1000, ngram_range =(1,2), binary=True)
-#     vectorizer = TfidfVectorizer(min_df=1, max_features = 500, ngram_range =(1,3))
+                             max_features = 5000, ngram_range =(1,3), binary=True)
+#     vectorizer = TfidfVectorizer(max_features = 5000, ngram_range =(1,3))
 
     train_data_features = vectorizer.fit_transform(X_train)
     train_data_features = vectorizer.fit_transform(X_train)
@@ -162,24 +165,35 @@ if __name__ == '__main__':
 
     # Initialize a Random Forest classifier with 100 trees
 #     clf = RandomForestClassifier(n_estimators = 200, n_jobs = 2)
-#     clf = BernoulliNB()
+    clf = BernoulliNB()
+    clf = GradientBoostingClassifier(verbose=True, learning_rate=0.001, n_estimators=10000, max_depth=4, max_features='auto')
     clf = MultinomialNB()
+    clf = SGDClassifier()
+    
+    
     clf = clf.fit( train_data_features, Y_train)
 
     test_data_features = vectorizer.transform(X_test)
     test_data_features = vectorizer.fit_transform(X_test)
     test_data_features = test_data_features.toarray()
 
-    # Use the random forest to make sentiment label predictions
     print "Predicting test labels...\n"
     y_pred = clf.predict(test_data_features)
     print metrics.classification_report(Y_test, y_pred)
     
+    print 'output feature importance'
     vocab = vectorizer.get_feature_names()
 #     for w in vocab:
 #         print w
     feature_names = vectorizer.get_feature_names()
-    coefs_with_fns = sorted(zip(clf.coef_[2], feature_names), reverse=False)
+    coefs_with_fns = sorted(zip(clf.coef_[2], feature_names), reverse=True)
 
+    
 #     for coef_1, fn_1 in coefs_with_fns[:1000]:
 #         print coef_1, fn_1
+        
+    classLabels = clf.classes_
+    for i, classLabel in enumerate(classLabels):
+        print 'top features for \t', classLabel
+        topN = np.argsort(clf.coef_[i])[:30]
+        print ("%s: %s" % (classLabel, " ".join(feature_names[j] for j in topN)))
