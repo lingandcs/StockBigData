@@ -1,3 +1,8 @@
 eclipse.preferences.version=1
 encoding//src/cctv/DeepLearner.py=utf-8
 encoding//src/cctv/NNLM.py=utf8
+encoding//src/cctv/NNLM_Clustering.py=utf8
+encoding//src/cctv/SectorPredictor.py=utf-8
+encoding//src/cctv/SectorPredictor_clustering.py=utf-8
+encoding//src/cctv/SectorPredictor_clustering2.py=utf-8
+encoding//src/cctv/SectorWords.py=utf-8

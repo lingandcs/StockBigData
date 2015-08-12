@@ -97,9 +97,9 @@ if __name__ == '__main__':
         level=logging.INFO)
 
     # Set values for various parameters
-    num_features = 100    # Word vector dimensionality
+    num_features = 200    # Word vector dimensionality
     min_word_count = 10   # Minimum word count
-    num_workers = 2       # Number of threads to run in parallel
+    num_workers = 4       # Number of threads to run in parallel
     context = 5         # Context window size
     downsampling = 1e-3   # Downsample setting for frequent words
 
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     model_name = "/home/lingandcs/workspace/FinancialNLP/data/XWLB_2013-20150715.csv"
     model.save(model_name)
 
-    testWords = [u'习近平', u'李克强', u'钓鱼岛', u'日本', u'朝鲜', u'台湾', u'奥巴马', u'科学', u'发展观', u'科学发展观', u"新疆", u"经济", u"互联网", u"创业"]
+    testWords = [u'银行', u'军事力量', u'医疗保健', u'保险', u'医疗保健', u'我军', u'股市', u'上市公司', u'农业', u"钢铁", u"经济", u"互联网", u"上海证券交易所"]
     for w in testWords:
         if w not in model.vocab:
             print w, 'is not in vocabulary'
@@ -128,7 +128,7 @@ if __name__ == '__main__':
         simWords = model.most_similar(w)
         simWords = [item[0] for item in simWords]
         print '\n\n Most similar words to:\t', w
-        print ' '.join(simWords[:10])    
+        print ' '.join(simWords[:15])    
     
     wordsInVocab = model.index2word
     
@@ -146,8 +146,8 @@ if __name__ == '__main__':
     t0 = time()  
      
     k = 200
-    km = KMeans(n_clusters=k, init='k-means++', max_iter=10000, n_init=1,
-                verbose=True)
+    km = KMeans(n_clusters=k, init='k-means++', max_iter=1000, n_init=1,
+                verbose=False)
     t0 = time()
     
     km.fit(featureVecs)
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     
     print 'output word clusters:\t'
     for item in pairs[::-1]:
-        print item[0], ' '.join(item[1][:])
+        print item[0], ' '.join(item[1][:10])
     
 #     for item in wordClusters.items():
 #         print item[0], ' '.join(item[1])

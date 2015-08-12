@@ -63,7 +63,7 @@ def preprocess(doc):
 if __name__ == '__main__':
 
     
-    dataFolder = '/Users/lingandcs/Projects/FinancialNLP/data/xwlb/*.csv'
+    dataFolder = '/home/lingandcs/workspace/FinancialNLP/data/*.csv'
     sents = []
     
     
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     
     # It can be helpful to create a meaningful model name and 
     # save the model for later use. You can load it later using Word2Vec.load()
-    model_name = "/Users/lingandcs/Projects/FinancialNLP/data/model/200features_4minwords_14context.model"
+    model_name = "/home/lingandcs/workspace/FinancialNLP/data/model/200features_4minwords_14context.model"
     model.save(model_name)
     print len(model.vocab), ' words leart in model'
     testWords = [u'习近平', u'李克强', u'钓鱼岛', u'日本', u'朝鲜', u'台湾', u'奥巴马', u'科学', u'发展观', u'科学发展观']
