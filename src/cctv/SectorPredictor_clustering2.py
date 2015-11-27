@@ -248,14 +248,14 @@ if __name__ == '__main__':
                              preprocessor = None, \
                              stop_words = None,   \
                              max_features = 5000, ngram_range =(1,2), binary=True)
-#     vectorizer = TfidfVectorizer(max_features = 15000, ngram_range =(1,3))    
+    vectorizer = TfidfVectorizer(max_features = 15000, ngram_range =(1,3))    
     
     train_data_features = vectorizer.fit_transform(X_train)
 
     feature_names_original = vectorizer.get_feature_names()#from original feature set
     
     
-    ch2 = SelectKBest(chi2, k=3500)
+    ch2 = SelectKBest(chi2, k=1000)
     train_data_features = ch2.fit_transform(train_data_features, Y_train)
     feature_names = [feature_names_original[idx] for idx in ch2.get_support(indices=True)]
 
@@ -273,8 +273,8 @@ if __name__ == '__main__':
 #     clf = RandomForestClassifier(n_estimators = 50, n_jobs = 2)
 #     clf = BernoulliNB()
 #     clf = GradientBoostingClassifier(verbose=True, learning_rate=0.001, n_estimators=1000, max_depth=4, max_features='auto')
-    clf = MultinomialNB()
-#     clf = SGDClassifier()
+#     clf = MultinomialNB()
+    clf = SGDClassifier()
 #     clf = linear_model.logistic()
 #     clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
 #     clf = SVC(kernel='linear')    

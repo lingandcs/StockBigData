@@ -245,11 +245,6 @@ if __name__ == '__main__':
         
 #     sys.exit()
     
-    
-    
-    
-    
-    
     train_data_features = train_data_features.toarray()
     
     # Initialize a Random Forest classifier with 100 trees

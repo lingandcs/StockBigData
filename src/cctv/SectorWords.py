@@ -42,10 +42,13 @@ import pickle
     
 if __name__ == '__main__':
     
-    model_name = "/home/lingandcs/workspace/FinancialNLP/data/model/200features_4minwords_14context.model"
+    model_name = "/home/lingandcs/workspace/FinancialNLP/data/model/2007_2015_word2vec_bigram.model"
     w2v_model = Word2Vec.load(model_name)
-    testWords = [u"能源", u"材料", u"工业", u"消费者", u"医疗", u"金融", u"信息技术", u"电信", u"公用",u"军工", u"互联网", u"体育", u"房地产", u"交通", u"保险", u"文化", u"铁路", u"航空", u"数据", u"李克强"]
+    testWords = ['医疗', '消费', '机械', '金融', '能源', '交通', '运输', '房产', 
+                 '地产', '传媒', '旅游',  '化工', '农林', '贸易', '信息', '生物',  
+                 '健康', '保险', '餐饮', '服装', '纺织',  '教育', '服务', '计算机', '大数据', "汽车", "军工"]
     for w in testWords:
+        w = w.decode('utf-8')
         if w not in w2v_model.vocab:
             print w, 'is not in vocabulary'
             continue
@@ -53,6 +56,6 @@ if __name__ == '__main__':
 #         print len(simWords)
         simWords = [item[0] for item in simWords]
         print 'Most relevant words to:\t', w
-        print ' '.join(simWords[:50])
-        print '\n'
+        print ' '.join(simWords[:20])
+        print '\r'
     
